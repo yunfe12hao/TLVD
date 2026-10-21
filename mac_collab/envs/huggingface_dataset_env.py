@@ -235,17 +235,18 @@ class HuggingFaceDatasetEnv(gym.Env):
 
     def step(self, action: Any, extra_info: Optional[Dict[str, Any]] = None) -> Tuple[Any, float, bool, bool, Dict[str, Any]]:
         """
-        Execute one step in the environment.
-        
-        Args:
-            action: The primary action (final answer string from coordinator/agent)
-            extra_info: Additional information for reward calculation including:
-                - 'agent_responses': List[str] - Individual agent responses
-                - 'commitment_text': str - Coordinator's commitment text
-                - 'agent_log_probs': Optional[List[float]] - Token log probabilities for AL reward
-                - 'prompt_embeddings': Optional[torch.Tensor] - Agent prompt embeddings
-                - 'belief_states': Optional[torch.Tensor] - Agent belief states
+        在环境中执行一步。
+    
+        参数:
+            action: 主动作（即协调者/智能体给出的最终答案字符串）
+            extra_info: 用于奖励计算的附加信息，包含:
+                - 'agent_responses': List[str] - 各智能体单独的回复
+                - 'commitment_text': str - 协调者的承诺文本
+                - 'agent_log_probs': Optional[List[float]] - 用于 AL 奖励的 token 对数概率
+                - 'prompt_embeddings': Optional[torch.Tensor] - 智能体提示嵌入
+                - 'belief_states': Optional[torch.Tensor] - 智能体信念状态
         """
+
         if self.current_sample is None:
             raise RuntimeError("step() called before reset() or after dataset exhaustion.")
 
