@@ -271,47 +271,48 @@ class HuggingFaceDatasetEnv(gym.Env):
         logger.info(f"🔍 QUESTION: {self.current_question}")
         logger.info("=" * 80)
         
-        # Strategy will be logged by MAC
+        # 策略将由 MAC 记录日志
         
-        # Executor responses will be logged by MAC
+        # 执行器（executor）的回复将由 MAC 记录日志
         
-        # Coordinator commitment will be logged by MAC
+        # 协调者（coordinator）的承诺（表态）将由 MAC 记录日志
         
         # logger.info(f"📖 GROUND TRUTH: {self.current_ground_truth_answer}")
         logger.info("=" * 80)
 
-        # --- Reward Calculation ---
-        # Task-Specific (TS) reward: based on correctness; uses coordinate LLM output and ground truth. Not calculated here; remove.
+        # --- 奖励计算 ---
+        # 任务特定（TS）奖励：依据正确性；使用协调者 LLM 的输出与标准答案（ground truth）。
 
         # is_correct = self._evaluate_answer(llm_answer_str, self.current_ground_truth_answer)
         is_correct=True
-        # TODO: Uncertainty reward: based on each agent's confidence and response similarity
+        # TODO: 不确定性奖励：依据各智能体的置信度与回复相似度计算
         agent_responses = extra_info.get('agent_responses', [])
         
 
         reward_ur = self._calculate_uncertainty_reward(extra_info)
         reward_ur = sum(reward_ur) / len(reward_ur) if reward_ur else 0.0
         
-        # Action Likelihood (AL) reward
+        # 动作似然（AL）奖励
         reward_al = self._calculate_action_likelihood_reward(extra_info)
         reward_al = sum(reward_al) / len(reward_al) if reward_al else 0.0
         
-        # Collaborative Contribution (CC) reward
+        # 协作贡献（CC）奖励
         reward_cc = self._calculate_collaborative_contribution_reward(
             llm_answer_str, extra_info, is_correct
         )
         reward_cc = sum(reward_cc) / len(reward_cc) if reward_cc else 0.0
         
-       
+       # 证据可靠性奖励
         reward_er = extra_info.get('evidence_ratio_list') if extra_info.get('evidence_ratio_list') else [0.0] * len(agent_responses)
         reward_er = sum(reward_er) / len(reward_er) if reward_er else 0.0
         
-       
+       # 各奖励的权重
         ur_weight = getattr(self.reward_args, 'ur_weight', 0.2)
         al_weight = getattr(self.reward_args, 'al_weight', 0.2)
         cc_weight = getattr(self.reward_args, 'cc_weight', 0.3)
         er_weight = getattr(self.reward_args, 'er_weight', 0.3)
-        
+
+        # 最终的总奖励是这几个维度的加权求和
         total_reward = ur_weight * reward_ur + al_weight * reward_al  + cc_weight * reward_cc + er_weight * reward_er
         
        
@@ -684,26 +685,27 @@ class HuggingFaceDatasetEnv(gym.Env):
             return [0.0] * len(agent_responses) if agent_responses else [0.0]
 
     def _calculate_text_similarity(self, text1: str, text2: str) -> float:
-        """Compute similarity between two pieces of text
-        
-        Args:
-            text1: first text
-            text2: second text
-            
-        Returns:
-            float: similarity score (0-1)
+        """计算两段文本之间的相似度。
+
+        参数:
+            text1: 第一段文本
+            text2: 第二段文本
+
+        返回:
+            float: 相似度得分（0-1）
         """
+
         if not isinstance(text1, str) or not isinstance(text2, str):
             return 0.0
             
-        
+        # 使用 sklearn 的 TfidfVectorizer 将两段文本转成 TF-IDF 向量
         vectorizer = TfidfVectorizer()
         
         try:
             
             tfidf_matrix = vectorizer.fit_transform([text1, text2])
             
-            
+            # 用 cosine_similarity 计算余弦相似度。这用于支撑上面提到的 AL 和 CC 奖励计算
             similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
             
             return float(similarity)
@@ -790,7 +792,7 @@ class HuggingFaceDatasetEnv(gym.Env):
         logger.info("Closing HuggingFaceDatasetEnv.")
         pass
 
-# Example Usage (for testing purposes):
+# 示例用法（仅供测试）
 if __name__ == '__main__':
     
     env_args_gsm8k = {
@@ -808,7 +810,7 @@ if __name__ == '__main__':
     
 
 
-    # Test MATH dataset
+     # 测试 MATH 数据集
     env_args_math = {
         "hf_dataset_path": "competition_math",
         "dataset_split": "test", # Using test split which is smaller
@@ -834,7 +836,7 @@ if __name__ == '__main__':
     print(f"Step Info: {step_info}")
     math_env.render()
 
-    # Test an incorrect answer for MATH
+    # 测试 MATH 数据集上的一个错误答案
     obs, info = math_env.reset()
     math_env.render()
     dummy_math_action_wrong = "The final answer is \\boxed{42}"
