@@ -98,8 +98,18 @@ class HuggingFaceDatasetEnv(gym.Env):
             self.episode_limit = 1
 
     def load_var_desc(self) -> List[Dict]:
-
-
+        """
+    加载并组织变量描述与图结构数据。
+    
+    该函数主要执行以下操作：
+    1. 读取包含变量名称和描述的 JSON 文件。
+    2. 从数据集中提取边，并按潜变量（Latent）分组。
+    3. 将每个潜变量的图结构与变量描述组合成一个字典。
+    4. 根据潜变量名称中的数字进行升序排序（例如 L1, L2, L10），最后返回。
+    
+    Returns:
+        List[Dict]: 包含潜变量信息、图结构和变量描述的字典列表。
+    """
         with open(self.var_desc_path, 'r') as f:
             var_names_and_desc = json.load(f)
 
